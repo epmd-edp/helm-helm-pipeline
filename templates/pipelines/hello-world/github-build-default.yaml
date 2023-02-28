@@ -1,0 +1,54 @@
+{{ if eq .Values.global.gitProvider "github" }}
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: github-shell-go-app-build-default
+spec:
+  workspaces:
+    - name: shared-workspace
+    - name: ssh-creds
+  params:
+    - name: pipelineUrl
+      default: https://tekton-{{ .Release.Namespace }}.{{ .Values.global.dnsWildCard }}/#/namespaces/$(context.pipelineRun.namespace)/pipelineruns/$(context.pipelineRun.name)
+      type: string
+    - name: git-source-url
+      default: "https://github.com/epmd-edp/go-go-beego"
+      description: git url to clone
+      type: string
+    - name: git-source-revision
+      description: 'git revision to checkout (branch, tag, sha, ref…)'
+      default: "master"
+      type: string
+    - name: CODEBASE_NAME
+      default: "shell"
+      description: "Project name"
+      type: string
+    - name: CODEBASEBRANCH_NAME
+      description: "Codebasebranchname"
+      type: string
+    - name: shell-image-version
+      default: 'alpine:3.17.1'
+      type: string
+    - name: username
+      type: string
+      default: "World"
+      description: "Example parameter"
+  tasks:
+
+{{- include "github-build-start" . | nindent 4 }}
+
+    - name: hello
+      taskRef:
+        name: hello
+      runAfter:
+      - init-values
+      params:
+      - name: BASE_IMAGE
+        value: "$(params.shell-image-version)"
+      - name: username
+        value: "$(params.username)"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+{{ end }}

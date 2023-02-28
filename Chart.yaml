@@ -1,0 +1,10 @@
+apiVersion: v2
+name: custom-tekton-chart
+description: Custom Tekton Chart
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+dependencies:
+  - name: edp-tekton-common-library
+    version: 0.2.5
+    repository: "https://epam.github.io/edp-helm-charts/stable"

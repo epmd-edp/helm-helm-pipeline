@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: hello
+spec:
+  params:
+  - name: BASE_IMAGE
+    type: string
+    default: "alpine"
+  - name: username
+    type: string
+  workspaces:
+    - description: A workspace that contains fetched git repo.
+      name: source
+  steps:
+    - name: hello
+      image: $(params.BASE_IMAGE)
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/bin/sh
+        echo "Hello $(params.username), the repository contains the following files:"
+        ls -al
