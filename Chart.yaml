@@ -1,9 +1,18 @@
 apiVersion: v2
 name: custom-tekton-chart
 description: Custom Tekton Chart
+home: https://epam.github.io/edp-install/
 type: application
 version: 1.0.0
 appVersion: "1.0.0"
+maintainers:
+  - name: epmd-edp
+    email: SupportEPMD-EDP@epam.com
+    url: https://solutionshub.epam.com/solution/epam-delivery-platform
+  - name: sergk
+    url: https://github.com/SergK
+sources:
+  - https://github.com/epam/helm-helm-pipeline
 dependencies:
   - name: edp-tekton-common-library
     version: 0.2.5
