@@ -3,6 +3,8 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: gerrit-shell-go-lib-review
+  labels:
+    {{- include "edp-tekton.labels" . | nindent 4 }}
 spec:
   workspaces:
     - name: shared-workspace
