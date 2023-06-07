@@ -15,5 +15,5 @@ sources:
   - https://github.com/epam/helm-helm-pipeline
 dependencies:
   - name: edp-tekton-common-library
-    version: 0.2.5
+    version: 0.2.7
     repository: "https://epam.github.io/edp-helm-charts/stable"
