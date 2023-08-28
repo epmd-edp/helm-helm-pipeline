@@ -21,7 +21,7 @@ Custom Tekton Chart
 
 | Repository | Name | Version |
 |------------|------|---------|
-| https://epam.github.io/edp-helm-charts/stable | edp-tekton-common-library | 0.2.7 |
+| https://epam.github.io/edp-helm-charts/stable | edp-tekton-common-library | 0.2.12 |
 
 ## Values
 
