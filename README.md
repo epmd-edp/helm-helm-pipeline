@@ -28,11 +28,19 @@ Custom Tekton Chart
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | fullnameOverride | string | `""` |  |
-| github.host | string | `"github.com"` | The GitHub host, adjust this if you run a GitHub enterprise. Default: github.com |
-| github.webhook.existingSecret | string | `"github"` | Existing secret which holds GitHub integration credentials: Username, Access Token, Secret String and Private SSH Key |
-| gitlab.host | string | `"git.epam.com"` | The GitLab host, adjust this if you run a GitLab enterprise. Default: gitlab.com |
-| gitlab.webhook.existingSecret | string | `"gitlab"` | Existing secret which holds GitLab integration credentials: Username, Access Token, Secret String and Private SSH Key |
+| gitServers.github.eventListener.enabled | bool | `true` | Enable EventListener |
+| gitServers.github.eventListener.ingress.enabled | bool | `true` | Enable ingress controller resource |
+| gitServers.github.eventListener.resources | object | `{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | EventListener resources |
+| gitServers.github.gitProvider | string | `"github"` |  |
+| gitServers.github.host | string | `"github.com"` |  |
+| gitServers.gitlab.eventListener.enabled | bool | `true` |  |
+| gitServers.gitlab.eventListener.ingress.enabled | bool | `true` | Enable ingress controller resource |
+| gitServers.gitlab.eventListener.resources | object | `{"limits":{"cpu":"500m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | EventListener resources |
+| gitServers.gitlab.gitProvider | string | `"gitlab"` |  |
+| gitServers.gitlab.host | string | `"gitlab.com"` |  |
+| gitServers.gitlab.webhook.skipWebhookSSLVerification | bool | `false` |  |
+| gitServers.gitlab.webhook.url | string | `"http://gitlab.example.com"` |  |
 | global.dnsWildCard | string | `""` |  |
-| global.gerritSSHPort | string | `"30003"` |  |
-| global.gitProvider | string | `"github"` |  |
+| global.gitProviders[0] | string | `"github"` |  |
+| global.gitProviders[1] | string | `"gitlab"` |  |
 | nameOverride | string | `""` |  |
