@@ -1,0 +1,164 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  labels:
+    app.edp.epam.com/pipelinetype: build
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+  name: github-build-edp
+spec:
+  description: The Build pipeline template for show how to extend the pipeline with custom tasks. This pipeline use the custom task hello-world.
+  params:
+    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+      name: pipelineUrl
+      type: string
+    - default: https://github.com/epmd-edp/python-python-python-3.8
+      description: git url to clone
+      name: git-source-url
+      type: string
+    - default: master
+      description: git revision to checkout (branch, tag, sha, ref…)
+      name: git-source-revision
+      type: string
+    - default: python-app
+      description: Project name
+      name: CODEBASE_NAME
+      type: string
+    - description: Codebasebranch name
+      name: CODEBASEBRANCH_NAME
+      type: string
+    - default: ''
+      description: Change number from Merge Request
+      name: changeNumber
+      type: string
+    - default: ''
+      description: Ticket name pattern
+      name: TICKET_NAME_PATTERN
+      type: string
+    - default: ''
+      description: Pattern to validate a commit message
+      name: COMMIT_MESSAGE_PATTERN
+      type: string
+    - default: ''
+      description: Commit message
+      name: COMMIT_MESSAGE
+      type: string
+    - default: "World"
+      description: "Example parameter"
+      name: username
+      type: string
+    - default: 'alpine:3.18.9'
+      name: image-version
+      type: string
+  results:
+    - description: VCS tag
+      name: VCS_TAG
+      type: string
+      value: $(tasks.get-version.results.VCS_TAG)
+  tasks:
+    - name: fetch-repository
+      params:
+        - name: url
+          value: $(params.git-source-url)
+        - name: revision
+          value: $(params.git-source-revision)
+        - name: subdirectory
+          value: source
+      taskRef:
+        kind: Task
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+        - name: ssh-directory
+          workspace: ssh-creds
+    - name: init-values
+      params:
+        - name: CODEBASE_NAME
+          value: $(params.CODEBASE_NAME)
+        - name: BRANCH_NAME
+          value: $(params.git-source-revision)
+      runAfter:
+        - fetch-repository
+      taskRef:
+        kind: Task
+        name: init-values
+    - name: get-version
+      params:
+        - name: CODEBASEBRANCH_NAME
+          value: $(params.CODEBASEBRANCH_NAME)
+      runAfter:
+        - init-values
+      taskRef:
+        kind: Task
+        name: get-version-edp
+    - name: hello-world
+      taskRef:
+        name: hello-world
+      runAfter:
+      - get-version
+      params:
+      - name: BASE_IMAGE
+        value: "$(params.image-version)"
+      - name: username
+        value: "$(params.username)"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+          subPath: source
+    - name: git-tag
+      params:
+        - name: GIT_USER_EMAIL
+          value: edp-ci@edp.ci-user
+        - name: GIT_USER_NAME
+          value: edp-ci
+        - name: GIT_SCRIPT
+          value: >
+            git tag -a "$(tasks.get-version.results.VCS_TAG)" -m "Tag is added
+            automatically by CI user"
+
+            git push --tags
+      runAfter:
+        - hello-world
+      taskRef:
+        kind: Task
+        name: git-cli
+      workspaces:
+        - name: source
+          subPath: source
+          workspace: shared-workspace
+        - name: ssh-directory
+          workspace: ssh-creds
+    - name: update-cbis
+      params:
+        - name: CBIS_NAME
+          value: $(tasks.init-values.results.RESULT_IMAGE_NAME)
+        - name: IMAGE_TAG
+          value: $(tasks.get-version.results.IS_TAG)
+      runAfter:
+        - git-tag
+      taskRef:
+        kind: Task
+        name: update-cbis
+  workspaces:
+    - name: shared-workspace
+    - name: ssh-creds
+  finally:
+    - name: update-cbb
+      params:
+        - name: CODEBASEBRANCH_NAME
+          value: $(params.CODEBASEBRANCH_NAME)
+        - name: CURRENT_BUILD_NUMBER
+          value: $(tasks.get-version.results.BUILD_ID)
+      taskRef:
+        kind: Task
+        name: update-cbb
+      when:
+        - input: $(tasks.status)
+          operator: in
+          values:
+            - Succeeded
+      when:
+        - input: $(tasks.status)
+          operator: in
+          values:
+            - Succeeded

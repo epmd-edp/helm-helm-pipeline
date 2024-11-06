@@ -1,0 +1,80 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  labels:
+    app.edp.epam.com/pipelinetype: deploy
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+  name: custom-deploy
+spec:
+  description: >
+    This Pipeline is used to deploy applications to the target Stage
+    (Environment).
+  params:
+    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+      description: |
+        URL of the pipeline run in Tekton Dashboard.
+      name: pipelineUrl
+      type: string
+    - description: >
+        EDP kind:CDPipeline name used for deployment. For example: mypipe,
+        myfeature
+      name: CDPIPELINE
+      type: string
+    - description: >
+        EDP kind:Stage name of the kind:CDPipeline defined in the CDPIPELINE
+        values. For example: dev, test, prod
+      name: CDSTAGE
+      type: string
+    - description: >
+        Applications payload in format: {"codebase1": {"imageTag": "version1",
+        "customValues": true}, "codebase2": {"imageTag": "version2",
+        "customValues": true}}. For example: {"demo": {"imageTag":
+        "main-20240103-141431", "customValues": true}, "myapp": {"imageTag":
+        "0.1.0-SNAPSHOT.1", "customValues": true}}
+      name: APPLICATIONS_PAYLOAD
+      type: string
+    - description: The name of secret with Kubeconfig to connect to the remote cluster
+      name: KUBECONFIG_SECRET_NAME
+      type: string
+    - default: "World"
+      description: "Example parameter"
+      name: username
+      type: string
+    - default: 'alpine:3.18.9'
+      name: image-version
+      type: string
+  tasks:
+    - name: hello-world-deploy
+      taskRef:
+        name: hello-world-deploy
+      params:
+      - name: BASE_IMAGE
+        value: "$(params.image-version)"
+      - name: username
+        value: "$(params.username)"
+    - name: deploy-app
+      params:
+        - name: PIPELINE
+          value: $(params.CDPIPELINE)
+        - name: STAGE
+          value: $(params.CDSTAGE)
+        - name: APPLICATIONS_PAYLOAD
+          value: $(params.APPLICATIONS_PAYLOAD)
+      runAfter:
+        - hello-world-deploy
+      taskRef:
+        kind: Task
+        name: deploy-applicationset-cli
+    - name: promote-images
+      params:
+        - name: APPLICATIONS_PAYLOAD
+          value: $(params.APPLICATIONS_PAYLOAD)
+        - name: CDPIPELINE_STAGE
+          value: $(params.CDSTAGE)
+        - name: CDPIPELINE_CR
+          value: $(params.CDPIPELINE)
+      runAfter:
+        - deploy-app
+      taskRef:
+        kind: Task
+        name: promote-images
