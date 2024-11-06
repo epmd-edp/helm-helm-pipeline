@@ -1,0 +1,42 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  labels:
+    app.edp.epam.com/pipelinetype: clean
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+  name: custom-clean
+spec:
+  description: |
+    This Pipeline is used to delete Argo CD application.
+  params:
+    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+      description: |
+        URL of the pipeline run in Tekton Dashboard.
+      name: pipelineUrl
+      type: string
+    - description: >
+        EDP kind:CDPipeline name used for deployment. For example: mypipe,
+        myfeature
+      name: CDPIPELINE
+      type: string
+    - description: >
+        EDP kind:Stage name of the kind:CDPipeline defined in the CDPIPELINE
+        values. For example: dev, test, prod
+      name: CDSTAGE
+      type: string
+    - default: "World"
+      description: "Example parameter"
+      name: username
+      type: string
+    - default: 'alpine:3.18.9'
+      name: image-version
+      type: string
+  tasks:
+    - name: hello-world-deploy
+      taskRef:
+        name: hello-world-deploy
+      params:
+      - name: BASE_IMAGE
+        value: "$(params.image-version)"
+      - name: username
+        value: "$(params.username)"
