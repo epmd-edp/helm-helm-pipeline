@@ -1,3 +1,5 @@
+# This is an example of a custom Tekton task that can be used in both build and review pipelines.
+# Modify this template to fit your specific task requirements or use it as a base for creating custom configurations.
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:

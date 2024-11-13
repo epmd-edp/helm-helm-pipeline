@@ -5,12 +5,12 @@ metadata:
     # -- Required label to identify the pipeline type as "build".
     app.edp.epam.com/pipelinetype: build
     {{- include "edp-tekton.labels" . | nindent 4 }}
-  name: github-build-edp
+  name: github-build-lib-edp
 spec:
-  description: The Build pipeline template for building applications from Github repositories with edp versioning.
+  description: The Build pipeline template for building libraries from Github repositories with edp versioning.
     This template also demonstrates how to extend the pipeline with custom tasks, including the custom task "hello-world".
 
-  # -- Parameters for the pipeline, automatically injected by the Tekton TriggerTemplate.
+  # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
     - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       name: pipelineUrl
@@ -23,7 +23,7 @@ spec:
       description: git revision to checkout (branch, tag, sha, ref…)
       name: git-source-revision
       type: string
-    - default: python-app
+    - default: python-lib
       description: Project name
       name: CODEBASE_NAME
       type: string
@@ -38,7 +38,7 @@ spec:
     # -- Parameters TICKET_NAME_PATTERN, COMMIT_MESSAGE_PATTERN, COMMIT_MESSAGE,
     # JIRA_ISSUE_METADATA_PAYLOAD, and JIRA_SERVER are required if Jira integration is enabled for the component.
     # For more details on Jira integration, refer to:
-    # https://docs.kuberocketci.io/docs/next/operator-guide/project-management-and-reporting/jira-integration
+    # https://docs.kuberocketci.io/docs/next/operator-guide/project-management-and-reporting/jira-integration.
     - default: ''
       description: Ticket name pattern
       name: TICKET_NAME_PATTERN
@@ -60,7 +60,7 @@ spec:
       name: JIRA_SERVER
       type: string
 
-    # -- Example of custom parameters that may be utilized within Tekton tasks
+    # -- Example of custom parameters that may be utilized within Tekton tasks.
     - default: "World"
       description: "Example parameter"
       name: username
@@ -128,7 +128,6 @@ spec:
         - name: source
           workspace: shared-workspace
           subPath: source
-
     - name: git-tag
       params:
         - name: GIT_USER_EMAIL
@@ -152,17 +151,6 @@ spec:
           workspace: shared-workspace
         - name: ssh-directory
           workspace: ssh-creds
-    - name: update-cbis
-      params:
-        - name: CBIS_NAME
-          value: $(tasks.init-values.results.RESULT_IMAGE_NAME)
-        - name: IMAGE_TAG
-          value: $(tasks.get-version.results.IS_TAG)
-      runAfter:
-        - git-tag
-      taskRef:
-        kind: Task
-        name: update-cbis
   workspaces:
     - name: shared-workspace
     - name: ssh-creds
