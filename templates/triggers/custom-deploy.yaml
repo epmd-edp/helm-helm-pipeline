@@ -6,6 +6,8 @@ metadata:
     app.edp.epam.com/pipelinetype: deploy
     {{- include "edp-tekton.labels" . | nindent 4 }}
 spec:
+  # -- Parameters that are automatically passed from the Portal UI when the deployment pipeline is triggered.
+  # These parameters are used to define specific values for the pipeline execution.
   params:
     - description: >
         EDP kind:CDPipeline name used for deployment. For example: mypipe,
@@ -44,6 +46,8 @@ spec:
           - name: KUBECONFIG_SECRET_NAME
             value: $(tt.params.KUBECONFIG_SECRET_NAME)
         pipelineRef:
+          # The name of the custom deploy pipeline to trigger. Replace this with the name
+          # of the deployment pipeline you want to trigger.
           name: custom-deploy
         taskRunTemplate:
           serviceAccountName: tekton

@@ -5,9 +5,9 @@ metadata:
     # -- Required label to identify the pipeline type as "review".
     app.edp.epam.com/pipelinetype: review
     {{- include "edp-tekton.labels" . | nindent 4 }}
-  name: github-review
+  name: bitbucket-review
 spec:
-  description: The Review pipeline template for validating changes from Github repositories.
+  description: The Review pipeline template for validating changes from Bitbucket repositories.
     This template also demonstrates how to extend the pipeline with custom tasks, including the custom task "hello-world".
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
@@ -27,12 +27,10 @@ spec:
       description: Refspec to fetch before checking out revision.
       name: git-refspec
       type: string
-    - default: ''
-      description: Target branch of Merge Request
+    - description: Target branch of Merge Request
       name: targetBranch
       type: string
-    - default: ''
-      description: Change number from Merge Request
+    - description: Change number from Merge Request
       name: changeNumber
       type: string
     - default: python-app
@@ -45,9 +43,6 @@ spec:
     - description: repository full name
       name: gitfullrepositoryname
       type: string
-    - description: commit sha
-      name: gitsha
-      type: string
 
     # -- Example of custom parameters that may be utilized within Tekton tasks.
     - default: "World"
@@ -58,27 +53,25 @@ spec:
       name: image-version
       type: string
   tasks:
-    - name: github-set-pending-status
+    - name: bitbucket-set-pending-status
       params:
         - name: REPO_FULL_NAME
           value: $(params.gitfullrepositoryname)
-        - name: DESCRIPTION
-          value: Build has started
-        - name: STATE
-          value: pending
-        - name: AUTH_TYPE
-          value: Token
-        - name: GITHUB_TOKEN_SECRET_NAME
-          value: ci-github
-        - name: GITHUB_TOKEN_SECRET_KEY
-          value: token
         - name: SHA
-          value: $(params.gitsha)
+          value: $(params.git-source-revision)
         - name: TARGET_URL
           value: $(params.pipelineUrl)
+        - name: DESCRIPTION
+          value: Managed by KubeRocketCI. Run with Tekton
+        - name: STATE
+          value: INPROGRESS
+        - name: BITBUCKET_TOKEN_SECRET_NAME
+          value: ci-bitbucket
+        - name: BITBUCKET_TOKEN_SECRET_KEY
+          value: token
       taskRef:
         kind: Task
-        name: github-set-status
+        name: bitbucket-set-status
     - name: fetch-repository
       params:
         - name: url
@@ -90,7 +83,7 @@ spec:
         - name: subdirectory
           value: source
       runAfter:
-        - github-set-pending-status
+        - bitbucket-set-pending-status
       taskRef:
         kind: Task
         name: git-clone
@@ -118,12 +111,12 @@ spec:
       taskRef:
         name: hello-world
       runAfter:
-      - init-values
+        - init-values
       params:
-      - name: BASE_IMAGE
-        value: "$(params.image-version)"
-      - name: username
-        value: "$(params.username)"
+        - name: BASE_IMAGE
+          value: "$(params.image-version)"
+        - name: username
+          value: "$(params.username)"
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -132,53 +125,49 @@ spec:
     - name: shared-workspace
     - name: ssh-creds
   finally:
-    - name: github-set-success-status
+    - name: bitbucket-set-success-status
       params:
         - name: REPO_FULL_NAME
           value: $(params.gitfullrepositoryname)
+        - name: SHA
+          value: $(params.git-source-revision)
+        - name: TARGET_URL
+          value: $(params.pipelineUrl)
         - name: DESCRIPTION
           value: Build was successful
         - name: STATE
-          value: success
-        - name: AUTH_TYPE
-          value: Token
-        - name: GITHUB_TOKEN_SECRET_NAME
-          value: ci-github
-        - name: GITHUB_TOKEN_SECRET_KEY
+          value: SUCCESSFUL
+        - name: BITBUCKET_TOKEN_SECRET_NAME
+          value: ci-bitbucket
+        - name: BITBUCKET_TOKEN_SECRET_KEY
           value: token
-        - name: SHA
-          value: $(params.gitsha)
-        - name: TARGET_URL
-          value: $(params.pipelineUrl)
       taskRef:
         kind: Task
-        name: github-set-status
+        name: bitbucket-set-status
       when:
         - input: $(tasks.status)
           operator: in
           values:
             - Succeeded
-    - name: github-set-failure-status
+    - name: bitbucket-set-failure-status
       params:
         - name: REPO_FULL_NAME
           value: $(params.gitfullrepositoryname)
+        - name: SHA
+          value: $(params.git-source-revision)
+        - name: TARGET_URL
+          value: $(params.pipelineUrl)
         - name: DESCRIPTION
           value: Build has failed
         - name: STATE
-          value: failure
-        - name: AUTH_TYPE
-          value: Token
-        - name: GITHUB_TOKEN_SECRET_NAME
-          value: ci-github
-        - name: GITHUB_TOKEN_SECRET_KEY
+          value: FAILED
+        - name: BITBUCKET_TOKEN_SECRET_NAME
+          value: ci-bitbucket
+        - name: BITBUCKET_TOKEN_SECRET_KEY
           value: token
-        - name: SHA
-          value: $(params.gitsha)
-        - name: TARGET_URL
-          value: $(params.pipelineUrl)
       taskRef:
         kind: Task
-        name: github-set-status
+        name: bitbucket-set-status
       when:
         - input: $(tasks.status)
           operator: in

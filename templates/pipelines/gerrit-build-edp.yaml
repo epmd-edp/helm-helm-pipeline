@@ -5,12 +5,12 @@ metadata:
     # -- Required label to identify the pipeline type as "build".
     app.edp.epam.com/pipelinetype: build
     {{- include "edp-tekton.labels" . | nindent 4 }}
-  name: github-build-edp
+  name: gerrit-build-edp
 spec:
-  description: The Build pipeline template for building applications from Github repositories with edp versioning.
+  description: The Build pipeline template for building applications from Gerrit repositories with edp versioning.
     This template also demonstrates how to extend the pipeline with custom tasks, including the custom task "hello-world".
 
-  # -- Parameters for the pipeline, automatically injected by the Tekton TriggerTemplate.
+  # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
     - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       name: pipelineUrl
@@ -30,15 +30,17 @@ spec:
     - description: Codebasebranch name
       name: CODEBASEBRANCH_NAME
       type: string
-    - default: ''
-      description: Change number from Merge Request
+    - description: Change number from Merge Request
       name: changeNumber
+      type: string
+    - description: Patchset number from Merge Request
+      name: patchsetNumber
       type: string
 
     # -- Parameters TICKET_NAME_PATTERN, COMMIT_MESSAGE_PATTERN, COMMIT_MESSAGE,
     # JIRA_ISSUE_METADATA_PAYLOAD, and JIRA_SERVER are required if Jira integration is enabled for the component.
     # For more details on Jira integration, refer to:
-    # https://docs.kuberocketci.io/docs/next/operator-guide/project-management-and-reporting/jira-integration
+    # https://docs.kuberocketci.io/docs/next/operator-guide/project-management-and-reporting/jira-integration.
     - default: ''
       description: Ticket name pattern
       name: TICKET_NAME_PATTERN
@@ -60,7 +62,7 @@ spec:
       name: JIRA_SERVER
       type: string
 
-    # -- Example of custom parameters that may be utilized within Tekton tasks
+    # -- Example of custom parameters that may be utilized within Tekton tasks.
     - default: "World"
       description: "Example parameter"
       name: username
@@ -88,6 +90,22 @@ spec:
       workspaces:
         - name: output
           workspace: shared-workspace
+        - name: ssh-directory
+          workspace: ssh-creds
+    - name: gerrit-notify
+      params:
+        - name: GERRIT_PORT
+          value: '30020'
+        - name: SSH_GERRIT_COMMAND
+          value: >-
+            review --message 'Build Started $(params.pipelineUrl)'
+            $(params.changeNumber),$(params.patchsetNumber)
+        - name: ERR_EXIT_CODE
+          value: '0'
+      taskRef:
+        kind: Task
+        name: gerrit-ssh-cmd
+      workspaces:
         - name: ssh-directory
           workspace: ssh-creds
     - name: init-values
@@ -118,12 +136,12 @@ spec:
       taskRef:
         name: hello-world
       runAfter:
-      - get-version
+        - get-version
       params:
-      - name: BASE_IMAGE
-        value: "$(params.image-version)"
-      - name: username
-        value: "$(params.username)"
+        - name: BASE_IMAGE
+          value: "$(params.image-version)"
+        - name: username
+          value: "$(params.username)"
       workspaces:
         - name: source
           workspace: shared-workspace

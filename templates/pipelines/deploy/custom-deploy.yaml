@@ -2,13 +2,15 @@ apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   labels:
+    # -- Required label to identify the pipeline type as "deploy".
     app.edp.epam.com/pipelinetype: deploy
     {{- include "edp-tekton.labels" . | nindent 4 }}
   name: custom-deploy
 spec:
-  description: >
-    This Pipeline is used to deploy applications to the target Stage
-    (Environment).
+  description: The Deploy pipeline template for deploying applications using Argo CD.
+    This template also demonstrates how to extend the pipeline with custom tasks, including the custom task "hello-world".
+
+  # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
     - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       description: |
@@ -36,6 +38,8 @@ spec:
     - description: The name of secret with Kubeconfig to connect to the remote cluster
       name: KUBECONFIG_SECRET_NAME
       type: string
+
+    # -- Example of custom parameters that may be utilized within Tekton tasks.
     - default: "World"
       description: "Example parameter"
       name: username
@@ -44,6 +48,9 @@ spec:
       name: image-version
       type: string
   tasks:
+    # -- Example of a custom task added to the pipeline.
+    # This task demonstrates how to include custom tasks in the deployment pipeline.
+    # It can be adapted to meet specific requirements by modifying or adding custom logic.
     - name: hello-world-deploy
       taskRef:
         name: hello-world-deploy
