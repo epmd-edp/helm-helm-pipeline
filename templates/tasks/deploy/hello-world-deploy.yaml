@@ -7,16 +7,46 @@ metadata:
   labels:
     {{- include "edp-tekton.labels" . | nindent 4 }}
 spec:
+  description: >
+    This is an example of a custom Tekton task that can be used in a Tekton
+    deployment pipeline. Modify this template to fit your specific task
+    requirements or use it as a base for creating custom configurations.
+
+  # -- Parameters for the task. Injected by the Tekton Deploy Pipeline. Can be used in the task steps.
   params:
+  - name: APPLICATIONS_PAYLOAD
+    description: >
+      Applications payload in format: {"codebase1": {"imageTag": "version1",
+      "customValues": true}, "codebase2": {"imageTag": "version2",
+      "customValues": true}}.
+    type: string
+  - name: PIPELINE
+    description: >
+      EDP kind:CDPipeline name used for deployment. For example: mypipe,
+      myfeature
+    type: string
+  - name: STAGE
+    description: >
+      EDP kind:Stage name of the kind:CDPipeline defined in the CDPIPELINE
+    type: string
+
+  # -- Example of custom parameters that may be utilized within Tekton tasks.
   - name: BASE_IMAGE
     type: string
     default: "alpine"
   - name: username
     type: string
+  results:
+    - description: APPLICATIONS_PAYLOAD
+      name: APPLICATIONS_PAYLOAD
+      type: string
   steps:
     - name: hello-world-deploy
       image: $(params.BASE_IMAGE)
       script: |
         #!/bin/sh
+
         echo "Hello $(params.username), the repository contains the following files:"
         ls -al
+
+        printf "%s" "$(params.APPLICATIONS_PAYLOAD)" > "$(results.APPLICATIONS_PAYLOAD.path)"
