@@ -7,8 +7,8 @@ metadata:
     {{- include "edp-tekton.labels" . | nindent 4 }}
   name: custom-deploy
 spec:
-  description: The Deploy pipeline template for deploying applications using Argo CD.
-    This template also demonstrates how to extend the pipeline with custom tasks, including the custom task "hello-world".
+  description: This Pipeline template is an example of a custom deployment pipeline.
+    Modify this template to fit your specific deployment requirements.
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
@@ -47,7 +47,13 @@ spec:
     - default: 'alpine:3.18.9'
       name: image-version
       type: string
+  results:
+    - description: APPLICATIONS_PAYLOAD
+      name: APPLICATIONS_PAYLOAD
+      type: string
+      value: $(tasks.hello-world-deploy.results.APPLICATIONS_PAYLOAD)
   tasks:
+
     # -- Example of a custom task added to the pipeline.
     # This task demonstrates how to include custom tasks in the deployment pipeline.
     # It can be adapted to meet specific requirements by modifying or adding custom logic.
@@ -55,23 +61,17 @@ spec:
       taskRef:
         name: hello-world-deploy
       params:
+      - name: PIPELINE
+        value: $(params.CDPIPELINE)
+      - name: STAGE
+        value: $(params.CDSTAGE)
+      - name: APPLICATIONS_PAYLOAD
+        value: $(params.APPLICATIONS_PAYLOAD)
       - name: BASE_IMAGE
         value: "$(params.image-version)"
       - name: username
         value: "$(params.username)"
-    - name: deploy-app
-      params:
-        - name: PIPELINE
-          value: $(params.CDPIPELINE)
-        - name: STAGE
-          value: $(params.CDSTAGE)
-        - name: APPLICATIONS_PAYLOAD
-          value: $(params.APPLICATIONS_PAYLOAD)
-      runAfter:
-        - hello-world-deploy
-      taskRef:
-        kind: Task
-        name: deploy-applicationset-cli
+
     - name: promote-images
       params:
         - name: APPLICATIONS_PAYLOAD
@@ -81,7 +81,7 @@ spec:
         - name: CDPIPELINE_CR
           value: $(params.CDPIPELINE)
       runAfter:
-        - deploy-app
+        - hello-world-deploy
       taskRef:
         kind: Task
         name: promote-images
