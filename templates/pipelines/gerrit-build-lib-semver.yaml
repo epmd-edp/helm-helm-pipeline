@@ -5,9 +5,9 @@ metadata:
     # -- Required label to identify the pipeline type as "build".
     app.edp.epam.com/pipelinetype: build
     {{- include "edp-tekton.labels" . | nindent 4 }}
-  name: gerrit-build-edp
+  name: gerrit-build-lib-semver
 spec:
-  description: The Build pipeline template for building applications from Gerrit repositories with edp versioning.
+  description: The Build pipeline template for building libraries from Gerrit repositories with semver versioning.
     This template also demonstrates how to extend the pipeline with custom tasks, including the custom task "hello-world".
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
@@ -23,7 +23,7 @@ spec:
       description: git revision to checkout (branch, tag, sha, ref…)
       name: git-source-revision
       type: string
-    - default: python-app
+    - default: python-lib
       description: Project name
       name: CODEBASE_NAME
       type: string
@@ -170,17 +170,6 @@ spec:
           workspace: shared-workspace
         - name: ssh-directory
           workspace: ssh-creds
-    - name: update-cbis
-      params:
-        - name: CBIS_NAME
-          value: $(tasks.init-values.results.RESULT_IMAGE_NAME)
-        - name: IMAGE_TAG
-          value: $(tasks.get-version.results.IS_TAG)
-      runAfter:
-        - git-tag
-      taskRef:
-        kind: Task
-        name: update-cbis
   workspaces:
     - name: shared-workspace
     - name: ssh-creds
