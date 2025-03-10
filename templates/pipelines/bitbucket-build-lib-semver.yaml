@@ -5,9 +5,9 @@ metadata:
     # -- Required label to identify the pipeline type as "build".
     app.edp.epam.com/pipelinetype: build
     {{- include "edp-tekton.labels" . | nindent 4 }}
-  name: github-build-lib-edp
+  name: bitbucket-build-lib-semver
 spec:
-  description: The Build pipeline template for building libraries from Github repositories with edp versioning.
+  description: The Build pipeline template for building libraries from Bitbucket repositories with semver versioning.
     This template also demonstrates how to extend the pipeline with custom tasks, including the custom task "hello-world".
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
@@ -23,7 +23,7 @@ spec:
       description: git revision to checkout (branch, tag, sha, ref…)
       name: git-source-revision
       type: string
-    - default: python-lib
+    - default: python-app
       description: Project name
       name: CODEBASE_NAME
       type: string
@@ -118,16 +118,17 @@ spec:
       taskRef:
         name: hello-world
       runAfter:
-      - get-version
+        - get-version
       params:
-      - name: BASE_IMAGE
-        value: "$(params.image-version)"
-      - name: username
-        value: "$(params.username)"
+        - name: BASE_IMAGE
+          value: "$(params.image-version)"
+        - name: username
+          value: "$(params.username)"
       workspaces:
         - name: source
           workspace: shared-workspace
           subPath: source
+
     - name: git-tag
       params:
         - name: GIT_USER_EMAIL
