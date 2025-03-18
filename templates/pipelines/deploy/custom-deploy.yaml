@@ -4,6 +4,7 @@ metadata:
   labels:
     # -- Required label to identify the pipeline type as "deploy".
     app.edp.epam.com/pipelinetype: deploy
+    app.edp.epam.com/triggertemplate: deploy
     {{- include "edp-tekton.labels" . | nindent 4 }}
   name: custom-deploy
 spec:

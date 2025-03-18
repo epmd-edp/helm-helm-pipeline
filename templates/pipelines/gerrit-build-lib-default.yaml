@@ -4,6 +4,7 @@ metadata:
   labels:
     # -- Required label to identify the pipeline type as "build".
     app.edp.epam.com/pipelinetype: build
+    app.edp.epam.com/triggertemplate: gerrit-build-template
     {{- include "edp-tekton.labels" . | nindent 4 }}
   name: gerrit-build-lib-default
 spec:

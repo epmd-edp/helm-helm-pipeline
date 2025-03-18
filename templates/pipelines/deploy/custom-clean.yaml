@@ -4,6 +4,7 @@ metadata:
   labels:
     # -- Required label to identify the pipeline type as "clean".
     app.edp.epam.com/pipelinetype: clean
+    app.edp.epam.com/triggertemplate: clean
     {{- include "edp-tekton.labels" . | nindent 4 }}
   name: custom-clean
 spec:

@@ -4,6 +4,7 @@ metadata:
   labels:
     # -- Required label to identify the pipeline type as "review".
     app.edp.epam.com/pipelinetype: review
+    app.edp.epam.com/triggertemplate: gerrit-review-template
     {{- include "edp-tekton.labels" . | nindent 4 }}
   name: gerrit-review
 spec:

@@ -4,6 +4,8 @@ metadata:
   labels:
     # -- Required label to identify the pipeline type as "build".
     app.edp.epam.com/pipelinetype: build
+    app.edp.epam.com/triggertemplate: gitlab-build-template
+    {{- include "edp-tekton.labels" . | nindent 4 }}
   name: gitlab-build-lib-semver
 spec:
   description: The Build pipeline template for building libraries from Gitlab repositories with semver versioning.
