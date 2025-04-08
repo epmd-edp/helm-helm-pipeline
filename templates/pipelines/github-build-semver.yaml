@@ -13,7 +13,7 @@ spec:
 
   # -- Parameters for the pipeline, automatically injected by the Tekton TriggerTemplate.
   params:
-    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/pipelineruns/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       name: pipelineUrl
       type: string
     - default: https://github.com/epmd-edp/python-python-python-3.8

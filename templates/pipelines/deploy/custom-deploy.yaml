@@ -13,7 +13,7 @@ spec:
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
-    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/pipelineruns/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       description: |
         URL of the pipeline run in Tekton Dashboard.
       name: pipelineUrl
