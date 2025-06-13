@@ -22,3 +22,4 @@ Custom Tekton Resources
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | dnsWildCard | string | `"example.com"` |  |
+| podTemplate | list | `[]` | Specifies a Pod template to use as the basis for the configuration of the Pod that executes each Task. |

@@ -51,5 +51,8 @@ spec:
           name: custom-deploy
         taskRunTemplate:
           serviceAccountName: tekton
+          {{- if .Values.podTemplate }}
+          podTemplate: {{ .Values.podTemplate | toYaml | nindent 12 }}
+          {{- end }}
         timeouts:
           pipeline: 1h00m0s
