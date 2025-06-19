@@ -22,12 +22,12 @@ spec:
     type: string
   - name: PIPELINE
     description: >
-      EDP kind:CDPipeline name used for deployment. For example: mypipe,
+      KRCI kind:CDPipeline name used for deployment. For example: mypipe,
       myfeature
     type: string
   - name: STAGE
     description: >
-      EDP kind:Stage name of the kind:CDPipeline defined in the CDPIPELINE
+      KRCI kind:Stage name of the kind:CDPipeline defined in the CDPIPELINE
     type: string
 
   # -- Example of custom parameters that may be utilized within Tekton tasks.
