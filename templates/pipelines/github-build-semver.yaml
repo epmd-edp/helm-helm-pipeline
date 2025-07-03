@@ -182,6 +182,7 @@ spec:
           operator: in
           values:
             - Succeeded
+            - Completed
     - name: push-to-jira
       params:
         - name: TICKET_NAME_PATTERN
