@@ -20,12 +20,12 @@ spec:
       "customValues": true}, "codebase2": {"imageTag": "version2",
       "customValues": true}}.
     type: string
-  - name: PIPELINE
+  - name: DEPLOYMENT_FLOW
     description: >
       KRCI kind:CDPipeline name used for deployment. For example: mypipe,
       myfeature
     type: string
-  - name: STAGE
+  - name: ENVIRONMENT
     description: >
       KRCI kind:Stage name of the kind:CDPipeline defined in the CDPIPELINE
     type: string
