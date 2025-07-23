@@ -154,8 +154,8 @@ spec:
           workspace: ssh-creds
     - name: update-cbis
       params:
-        - name: CBIS_NAME
-          value: $(tasks.init-values.results.RESULT_IMAGE_NAME)
+        - name: CODEBASEBRANCH_NAME
+          value: $(params.CODEBASEBRANCH_NAME)
         - name: IMAGE_TAG
           value: $(tasks.get-version.results.IS_TAG)
       runAfter:
