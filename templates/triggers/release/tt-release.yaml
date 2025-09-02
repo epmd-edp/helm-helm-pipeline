@@ -1,0 +1,49 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  labels:
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+  name: custom-release
+spec:
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: custom-app-release-
+        labels:
+          app.edp.epam.com/pipelinetype: release
+        annotations:
+          argocd.argoproj.io/compare-options: IgnoreExtraneous
+      spec:
+        pipelineRef:
+          name: custom-release
+        params:
+          - name: git-source-url
+            value: "git@github.com:<account-name>/<component-name>.git"
+          - name: git-source-revision
+            value: "release/2.27"
+          - name: version
+            value: "2.27.1"
+          - name: dockerhub-account
+            value: "<account-name>"
+          - name: codebase-name
+            value: "<component-name>"
+          - name: chart-path
+            value: "deploy-templates"
+        taskRunTemplate:
+          serviceAccountName: tekton
+        workspaces:
+          - name: shared-workspace
+            subPath: codebase
+            volumeClaimTemplate:
+              metadata:
+                creationTimestamp: null
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 3Gi
+          - name: ssh-creds
+            secret:
+              secretName: ci-github    # Change secret name to `ci-<git-provider>` for other git providers
