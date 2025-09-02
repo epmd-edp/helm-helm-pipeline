@@ -1,0 +1,46 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  labels:
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+  name: custom-run-autotests
+spec:
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        annotations:
+          argocd.argoproj.io/compare-options: IgnoreExtraneous
+        generateName: run-autotests-
+        labels:
+          app.edp.epam.com/pipelinetype: tests
+      spec:
+        params:
+          - name: git-source-url
+            value: "git@<git-provider>:<org-or-account-name>/autotests.git"
+          - name: git-source-revision
+            value: "main"
+          - name: makefile-target
+            value: "dev"
+          - name: base-image
+            value: "epamedp/maven-java21-make:0.1.3"
+        pipelineRef:
+          name: custom-run-autotests
+        taskRunTemplate:
+          serviceAccountName: tekton
+          {{- if .Values.podTemplate }}
+          podTemplate: {{ .Values.podTemplate | toYaml | nindent 12 }}
+          {{- end }}
+        workspaces:
+          - name: shared-workspace
+            subPath: codebase
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: "5Gi"
+          - name: ssh-creds
+            secret:
+              secretName: ci-bitbucket    # Change secret name to `ci-<git-provider>` for other git providers

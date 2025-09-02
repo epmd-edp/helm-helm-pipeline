@@ -1,0 +1,98 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: buildkit-release
+  labels:
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+  annotations:
+    # we use tekton-chain to sign the image and provenance so we need to upload the rekor transparency log
+    chains.tekton.dev/transparency-upload: 'true'
+    tekton.dev/pipelines.minVersion: "0.17.0"
+    tekton.dev/categories: Image Build
+    tekton.dev/tags: image-build
+    tekton.dev/displayName: "Build and upload container image using buildkit"
+    tekton.dev/platforms: "linux/amd64"
+spec:
+  description: >-
+    This Task builds a simple Dockerfile with buildkit and pushes to a registry.
+    This Task stores the image name and digest as results, allowing Tekton Chains to pick up
+    that an image was built & sign it.
+  params:
+    - name: codebase-name
+      description: Name of codebase
+    - name: image-tag
+      description: Image tag
+    - name: dockerhub-account
+      description: Name of dockerhub account to push images
+    - name: registry-url
+      description: URL of the container registry
+      default: "docker.io"
+    - name: builder-image
+      description: The image on which builds will run
+      default: epamedp/buildkit:0.1.1
+  workspaces:
+    - name: source
+      description: Holds the context and Dockerfile
+  volumes:
+    - name: dockerconfig
+      secret:
+        secretName: kaniko-docker-config-release
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+        optional: true
+  results:
+    - name: IMAGE_DIGEST
+      description: Digest of the image just built.
+    - name: IMAGE_URL
+      description: URL of the image just built.
+  steps:
+    - name: build-and-push
+      workingDir: $(workspaces.source.path)
+      image: "$(params.builder-image)"
+      env:
+        - name: CODEBASE_NAME
+          value: "$(params.codebase-name)"
+        - name: IMAGE_TAG
+          value: "$(params.image-tag)"
+        - name: CONTAINER_REGISTRY_URL
+          value: "$(params.registry-url)"
+        - name: CONTAINER_REGISTRY_SPACE
+          value: "$(params.dockerhub-account)"
+      script: |
+        #!/usr/bin/env sh
+
+        buildkitd --rootless &
+
+        sleep 5
+
+        buildctl build \
+          --frontend dockerfile.v0 \
+          --local context=. \
+          --local dockerfile=. \
+          --metadata-file metadata.json \
+          --opt platform=linux/amd64,linux/arm64 \
+          --output type=image,name=${CONTAINER_REGISTRY_URL}/${CONTAINER_REGISTRY_SPACE}/${CODEBASE_NAME}:${IMAGE_TAG},push=true
+
+        jq -r '.["containerimage.digest"]' metadata.json > /tekton/results/IMAGE_DIGEST
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - mountPath: /root/.docker/config.json
+          name: dockerconfig
+          subPath: config.json
+
+    - image: alpine:3.18.6
+      name: write-url
+      env:
+        - name: CODEBASE_NAME
+          value: "$(params.codebase-name)"
+        - name: IMAGE_TAG
+          value: "$(params.image-tag)"
+        - name: CONTAINER_REGISTRY_URL
+          value: "$(params.registry-url)"
+        - name: CONTAINER_REGISTRY_SPACE
+          value: "$(params.dockerhub-account)"
+      script: |
+        set -e
+        echo -n "${CONTAINER_REGISTRY_URL}/${CONTAINER_REGISTRY_SPACE}/${CODEBASE_NAME}:${IMAGE_TAG}" | tee "$(results.IMAGE_URL.path)"

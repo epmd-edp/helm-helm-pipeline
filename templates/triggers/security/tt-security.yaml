@@ -1,0 +1,44 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: custom-security-scan
+  labels:
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+spec:
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: security-scan-
+        labels:
+          app.edp.epam.com/pipelinetype: security
+        annotations:
+          argocd.argoproj.io/compare-options: IgnoreExtraneous
+      spec:
+        taskRunTemplate:
+          serviceAccountName: tekton
+          {{ if .Values.podTemplate }}
+          podTemplate: {{ .Values.podTemplate | toYaml | nindent 12 }}
+          {{ end }}
+        pipelineRef:
+          name: custom-security-scan
+        params:
+          - name: git-source-url
+            value: "<git-provider>:<org-or-account-name>/<component-name>.git"
+          - name: git-source-revision
+            value: "main"
+          - name: CODEBASE_NAME
+            value: "<component-name>"
+        workspaces:
+          - name: shared-workspace
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: "5Gi"
+            subPath: codebase
+          - name: ssh-creds
+            secret:
+              secretName: ci-bitbucket   # Change secret name to `ci-<git-provider>` for other git providers

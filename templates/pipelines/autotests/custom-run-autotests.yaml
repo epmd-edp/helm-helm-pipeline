@@ -1,0 +1,86 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: custom-run-autotests
+  labels:
+    {{- include "edp-tekton.labels" . | nindent 4 }}
+    app.edp.epam.com/triggertemplate: custom-run-autotests
+    app.edp.epam.com/pipelinetype: tests
+spec:
+  description: >-
+    Custom Pipeline for running autotests.
+    This pipeline clones the autotests repository and executes the specified Makefile target.
+    It supports custom base images and configurable Makefile targets for flexible test execution.
+  workspaces:
+    - name: shared-workspace
+    - name: ssh-creds
+  params:
+    - name: git-source-url
+      default: "https://github.com/SergK/autotests.git"
+      description: "URL of the repository containing the autotests to run."
+    - name: git-source-revision
+      default: "main"
+      description: "Branch or commit SHA to checkout from the autotests repository."
+    - name: makefile-target
+      default: "dev"
+      description: "Makefile target to execute for running autotests."
+    - name: base-image
+      default: "epamedp/maven-java21-make:0.1.3"
+      description: "Docker image that must include all required tools for running autotests and the 'make' command."
+
+    # -- Example of custom parameters that may be utilized within Tekton tasks.
+    - default: "World"
+      description: "Example parameter"
+      name: username
+      type: string
+    - default: 'alpine:3.18.9'
+      name: image-version
+      type: string
+  tasks:
+    - name: fetch-repository
+      taskRef:
+          kind: Task
+          name: git-clone
+      params:
+        - name: url
+          value: $(params.git-source-url)
+        - name: revision
+          value: $(params.git-source-revision)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+        - name: ssh-directory
+          workspace: ssh-creds
+
+    # -- Example of a custom task added to the pipeline.
+    # This task demonstrates how to include custom tasks in the pipeline.
+    # It can be adapted to meet specific requirements by modifying or adding custom logic.
+    - name: hello-world
+      taskRef:
+        name: hello-world
+      runAfter:
+        - get-version
+      params:
+        - name: BASE_IMAGE
+          value: "$(params.image-version)"
+        - name: username
+          value: "$(params.username)"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+          subPath: source
+
+    - name: run-autotests
+      taskRef:
+        kind: Task
+        name: run-autotests
+      runAfter:
+        - fetch-repository
+      params:
+        - name: makefile-target
+          value: "$(params.makefile-target)"
+        - name: base-image
+          value: "$(params.base-image)"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
