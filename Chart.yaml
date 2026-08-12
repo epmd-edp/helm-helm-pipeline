@@ -1,6 +1,6 @@
 apiVersion: v2
 name: custom-tekton-resources
-description: Custom Tekton Resources
+description: Custom Tekton pipelines and tasks for KubeRocketCI, aligned with the edp-tekton 0.27 platform contract
 home: https://docs.kuberocketci.io/
 type: application
 version: 1.0.0

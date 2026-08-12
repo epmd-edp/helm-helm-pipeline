@@ -1,4 +1,11 @@
+# -- Cluster DNS wildcard; drives the portal links in every pipeline.
 dnsWildCard: "example.com"
+
+# -- Portal ingress host override; defaults to krci-portal-<namespace>.<dnsWildCard>.
+portalHost: ""
+
+# -- Cluster name segment of portal links; defaults to the first label of dnsWildCard.
+clusterName: ""
 
 # -- Specifies a Pod template to use as the basis for the configuration of the Pod that executes each Task.
 podTemplate: []
