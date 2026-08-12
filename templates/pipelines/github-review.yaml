@@ -13,7 +13,7 @@ spec:
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
-    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/pipelineruns/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+    - default: {{ include "edp-tekton.portalBaseUrl" . }}/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       name: pipelineUrl
       type: string
     - default: https://github.com/epmd-edp/python-python-python-3.8
@@ -133,14 +133,12 @@ spec:
     - name: shared-workspace
     - name: ssh-creds
   finally:
-    - name: github-set-success-status
+    - name: github-report-pipeline-status
       params:
+        - name: "PIPELINE_STATUS"
+          value: "$(tasks.status)"
         - name: REPO_FULL_NAME
           value: $(params.gitfullrepositoryname)
-        - name: DESCRIPTION
-          value: Build was successful
-        - name: STATE
-          value: success
         - name: AUTH_TYPE
           value: Token
         - name: GITHUB_TOKEN_SECRET_NAME
@@ -154,34 +152,3 @@ spec:
       taskRef:
         kind: Task
         name: github-set-status
-      when:
-        - input: $(tasks.status)
-          operator: in
-          values:
-            - Succeeded
-    - name: github-set-failure-status
-      params:
-        - name: REPO_FULL_NAME
-          value: $(params.gitfullrepositoryname)
-        - name: DESCRIPTION
-          value: Build has failed
-        - name: STATE
-          value: failure
-        - name: AUTH_TYPE
-          value: Token
-        - name: GITHUB_TOKEN_SECRET_NAME
-          value: ci-github
-        - name: GITHUB_TOKEN_SECRET_KEY
-          value: token
-        - name: SHA
-          value: $(params.gitsha)
-        - name: TARGET_URL
-          value: $(params.pipelineUrl)
-      taskRef:
-        kind: Task
-        name: github-set-status
-      when:
-        - input: $(tasks.status)
-          operator: in
-          values:
-            - Failed

@@ -59,7 +59,7 @@ spec:
       taskRef:
         name: hello-world
       runAfter:
-        - get-version
+        - fetch-repository
       params:
         - name: BASE_IMAGE
           value: "$(params.image-version)"

@@ -13,7 +13,7 @@ spec:
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
-    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/pipelineruns/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+    - default: {{ include "edp-tekton.portalBaseUrl" . }}/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       name: pipelineUrl
       type: string
     - default: https://github.com/epmd-edp/python-python-python-3.8
@@ -126,14 +126,15 @@ spec:
         - name: source
           workspace: shared-workspace
           subPath: source
+
   workspaces:
     - name: shared-workspace
     - name: ssh-creds
   finally:
-    - name: gitlab-set-success-status
+    - name: gitlab-report-pipeline-status
       params:
-        - name: STATE
-          value: success
+        - name: "PIPELINE_STATUS"
+          value: "$(tasks.status)"
         - name: GITLAB_HOST_URL
           value: $(params.git-source-url)
         - name: REPO_FULL_NAME
@@ -148,41 +149,6 @@ spec:
           value: $(params.pipelineUrl)
         - name: CONTEXT
           value: ci-pipeline
-        - name: DESCRIPTION
-          value: Managed by KubeRocketCI. Run with Tekton
       taskRef:
         kind: Task
         name: gitlab-set-status
-      when:
-        - input: $(tasks.status)
-          operator: in
-          values:
-            - Succeeded
-    - name: gitlab-set-failure-status
-      params:
-        - name: STATE
-          value: failed
-        - name: GITLAB_HOST_URL
-          value: $(params.git-source-url)
-        - name: REPO_FULL_NAME
-          value: $(params.gitfullrepositoryname)
-        - name: GITLAB_TOKEN_SECRET_NAME
-          value: ci-gitlab
-        - name: GITLAB_TOKEN_SECRET_KEY
-          value: token
-        - name: SHA
-          value: $(params.git-source-revision)
-        - name: TARGET_URL
-          value: $(params.pipelineUrl)
-        - name: CONTEXT
-          value: ci-pipeline
-        - name: DESCRIPTION
-          value: Managed by KubeRocketCI. Run with Tekton
-      taskRef:
-        kind: Task
-        name: gitlab-set-status
-      when:
-        - input: $(tasks.status)
-          operator: in
-          values:
-            - Failed

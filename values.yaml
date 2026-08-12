@@ -9,3 +9,7 @@ podTemplate: []
 #     operator: "Equal"
 #     value: "value"
 #     effect: "NoSchedule"
+
+global:
+  # -- Gerrit SSH port; match the platform pipelines-library value.
+  gerritSSHPort: "30003"

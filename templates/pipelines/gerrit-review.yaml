@@ -13,7 +13,7 @@ spec:
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
-    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/pipelineruns/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+    - default: {{ include "edp-tekton.portalBaseUrl" . }}/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       name: pipelineUrl
       type: string
     - default: https://github.com/epmd-edp/python-python-python-3.8
@@ -72,7 +72,7 @@ spec:
     - name: gerrit-notify
       params:
         - name: GERRIT_PORT
-          value: '30020'
+          value: '{{ .Values.global.gerritSSHPort }}'
         - name: SSH_GERRIT_COMMAND
           value: >-
             review --verified 0 --message 'Build Started $(params.pipelineUrl)'
@@ -119,7 +119,7 @@ spec:
     - name: gerrit-vote-success
       params:
         - name: GERRIT_PORT
-          value: '30020'
+          value: '{{ .Values.global.gerritSSHPort }}'
         - name: SSH_GERRIT_COMMAND
           value: >-
             review --verified +1 --message 'Build Successfull
@@ -139,7 +139,7 @@ spec:
     - name: gerrit-vote-failure
       params:
         - name: GERRIT_PORT
-          value: '30020'
+          value: '{{ .Values.global.gerritSSHPort }}'
         - name: SSH_GERRIT_COMMAND
           value: >-
             review --verified -1 --message 'Build Failed $(params.pipelineUrl)'

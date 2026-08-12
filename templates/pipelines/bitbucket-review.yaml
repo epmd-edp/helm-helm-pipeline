@@ -13,7 +13,7 @@ spec:
 
   # -- Parameters for the pipeline, automatically injected by the Tekton Trigger Template.
   params:
-    - default: https://portal-{{ $.Release.Namespace }}.{{ $.Values.dnsWildCard }}/c/main/pipelines/pipelineruns/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
+    - default: {{ include "edp-tekton.portalBaseUrl" . }}/$(context.pipelineRun.namespace)/$(context.pipelineRun.name)
       name: pipelineUrl
       type: string
     - default: https://github.com/epmd-edp/python-python-python-3.8
@@ -70,6 +70,8 @@ spec:
           value: ci-bitbucket
         - name: BITBUCKET_TOKEN_SECRET_KEY
           value: token
+        - name: KEY
+          value: "review"
       taskRef:
         kind: Task
         name: bitbucket-set-status
@@ -126,51 +128,20 @@ spec:
     - name: shared-workspace
     - name: ssh-creds
   finally:
-    - name: bitbucket-set-success-status
+    - name: bitbucket-report-pipeline-status
+      taskRef:
+        kind: Task
+        name: bitbucket-set-status
       params:
+        - name: PIPELINE_STATUS
+          value: "$(tasks.status)"
         - name: REPO_FULL_NAME
           value: $(params.gitfullrepositoryname)
         - name: SHA
-          value: $(params.git-source-revision)
+          value: "$(params.git-source-revision)"
         - name: TARGET_URL
           value: $(params.pipelineUrl)
-        - name: DESCRIPTION
-          value: Build was successful
-        - name: STATE
-          value: SUCCESSFUL
         - name: BITBUCKET_TOKEN_SECRET_NAME
           value: ci-bitbucket
         - name: BITBUCKET_TOKEN_SECRET_KEY
           value: token
-      taskRef:
-        kind: Task
-        name: bitbucket-set-status
-      when:
-        - input: $(tasks.status)
-          operator: in
-          values:
-            - Succeeded
-    - name: bitbucket-set-failure-status
-      params:
-        - name: REPO_FULL_NAME
-          value: $(params.gitfullrepositoryname)
-        - name: SHA
-          value: $(params.git-source-revision)
-        - name: TARGET_URL
-          value: $(params.pipelineUrl)
-        - name: DESCRIPTION
-          value: Build has failed
-        - name: STATE
-          value: FAILED
-        - name: BITBUCKET_TOKEN_SECRET_NAME
-          value: ci-bitbucket
-        - name: BITBUCKET_TOKEN_SECRET_KEY
-          value: token
-      taskRef:
-        kind: Task
-        name: bitbucket-set-status
-      when:
-        - input: $(tasks.status)
-          operator: in
-          values:
-            - Failed
